@@ -1,0 +1,147 @@
+---
+title: "HW2"
+format: html
+code-fold: False
+knitr: 
+  opts_chunk: 
+    warning: false
+    message: false
+---
+
+```{r}
+#importing libraries
+library(sf)
+library(tmap)
+library(tidyverse)
+library(here)
+
+library(gt)
+library(dplyr)
+```
+
+```{r}
+#reading in data
+
+# initializing variables for our data
+ejscreen <- st_read(here("data", "ejscreen", "ejscreen_2023_statepct.gdb"))
+
+holc <- st_read(here("data", "mapping-inequality","mapping-inequality-los-angeles.json"))
+
+birds <- st_read(here("data", "gbif-birds-LA"))
+
+# ensuring datasets have the same CRS
+ejscreen <- st_transform(ejscreen, st_crs(holc))
+```
+
+
+```{r}
+
+# creating plot of HOLC polygons overlaying LA county
+tmap_mode("plot")
+
+tm_shape(holc) +
+  tm_basemap(server = "OpenStreetMap") +
+  tm_polygons(col = "grade",
+              #using custom colots to better match original color scheme
+              palette = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B"),
+              title = "HOLC Grade",
+              alpha = 0.6,
+              border.col = "black",
+              border.lwd = 0.5) +
+  tm_layout(
+    main.title = "Historical Redlining in Los Angeles",
+    legend.outside = TRUE,
+    frame = FALSE
+  ) +
+  tm_scale_bar(position = c("left", "bottom")) +
+  tm_compass(position = c("right", "top"))
+
+```
+
+```{r}
+#had error about indexes and S2, needed to set to FALSE
+
+sf::sf_use_s2(FALSE)
+#assigning HOLC grades to each block group
+joined_ej_holc <- st_join(ejscreen, holc)
+
+# dropping geometries for the summary
+joined_ej_holc <- st_drop_geometry(joined_ej_holc)
+
+# counting block groups by HOLC grade
+summary_table <- joined_ej_holc %>%
+  mutate(grade = ifelse(is.na(grade), "Ungraded", grade)) %>%
+  count(grade) %>%
+  mutate(percent = round(100 * n / sum(n), 1))
+
+# displaying a table with the r package gt
+summary_table %>%
+  gt() %>%
+  tab_header(title = "Block Groups by HOLC Grade") %>%
+  fmt_number(columns = vars(percent), decimals = 1)
+
+```
+```{r}
+# grouping and summarizing EJScreen variables
+ej_summary <- joined_ej_holc %>%
+  group_by(grade) %>%
+  summarize(
+    #getting means of our target variables %low income, percentile life expectancy and particulate matter
+      mean_low_income = mean(LOWINCOME, na.rm = TRUE),
+    mean_pm25 = mean(PM25, na.rm = TRUE),
+    mean_life_expectancy = mean(LIFEEXPPCT, na.rm = TRUE)
+  )
+```
+
+```{r}
+
+# plotting % percent low income
+ggplot(ej_summary, aes(x = grade, y = mean_low_income, fill = grade)) +
+  geom_col() +
+  labs(title = "% Low Income by HOLC Grade", x = "HOLC Grade", y = "Mean % Low Income") +
+  scale_fill_manual(values = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B")) +
+  theme_minimal()
+
+```
+
+```{r}
+# plotting PM2.5
+ggplot(ej_summary, aes(x = grade, y = mean_pm25, fill = grade)) +
+  geom_col() +
+  labs(title = "PM2.5 Percentile by HOLC Grade", x = "HOLC Grade", y = "Mean Percentile") +
+  scale_fill_manual(values = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B")) +
+  theme_minimal()
+
+```
+
+```{r}
+# plotting life expectancy
+ggplot(ej_summary, aes(x = grade, y = mean_life_expectancy, fill = grade)) +
+  geom_col() +
+  labs(title = "Low Life Expectancy Percentile by HOLC Grade", x = "HOLC Grade", y = "Mean Percentile") +
+  scale_fill_manual(values = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B")) +
+  theme_minimal()
+```
+
+```{r}
+# transforming the 
+birds <- st_transform(birds, st_crs(holc))
+
+# Spatial join: assign HOLC grade to each bird observation
+bird_joined <- st_join(birds, holc)
+
+# Drop geometry and summarize
+bird_summary <- bird_joined %>%
+  st_drop_geometry() %>%
+  count(grade) %>%
+  mutate(percent = round(100 * n / sum(n), 1))
+
+# Plot bird observations
+ggplot(bird_summary, aes(x = grade, y = percent, fill = grade)) +
+  geom_col() +
+  labs(title = "Bird Observations by HOLC Grade", x = "HOLC Grade", y = "Percent of Observations") +
+  scale_fill_manual(values = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B")) +
+  theme_minimal()
+
+```
+
