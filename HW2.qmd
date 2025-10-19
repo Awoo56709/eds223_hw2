@@ -14,7 +14,6 @@ library(sf)
 library(tmap)
 library(tidyverse)
 library(here)
-
 library(gt)
 library(dplyr)
 ```
@@ -122,6 +121,17 @@ ggplot(ej_summary, aes(x = grade, y = mean_life_expectancy, fill = grade)) +
   scale_fill_manual(values = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B")) +
   theme_minimal()
 ```
+## Interpret the patterns you observe in your results
+
+What I observed through this assignment was not atypical. Residents in lower HOLC graded areas tend to be of the lower socioeconomic status, and are prone to higher levels of environmental injustices (zoning and lack of green space) and social obstacles. In this example, higher PM2.5 levels and "coincidentally" higher instance of lower live expectancy. 
+
+Moreover, it is startling to know there are a lot of NA values. This illustrates that there is far more that we do not know about the sample/population in terms of the affects of historic HOLC ratings.
+
+## Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
+
+Based on the observations, HOLC rated areas tend to have an inverse relationship between the rating and the number of lower income persons. With graded A areas having the least and D having the higher percentage of lower income persons.Fast forward, this "established" methodology can and has allowed redlining policies to: keep lower income people in certain areas, hinder investment in resources, create a lack of green space/recreation centers, limit education/job opportunities, unfair zoning (refineries,factories freeways).
+
+# Part 2:Legacy of redlining in biodiversity observations
 
 ```{r}
 # transforming the 
@@ -144,4 +154,13 @@ ggplot(bird_summary, aes(x = grade, y = percent, fill = grade)) +
   theme_minimal()
 
 ```
+
+## Our results don’t match the findings from Ellis-Soto et al. 2023! Read the abstract of the study. Why might we have obtained different results in our analysis? What did the paper consider that we did not? 
+
+Our analysis differed because of a few things:
+- We focused on Los Angeles but they did a country-wide analysis
+- They adjusted their approach woth confounding gvariables such as vegetation, open space, population desnity and climate
+- They used a mixed effects model
+- We used sampling density alone but Ellis-Soto mentioned survey completeness.
+
 
