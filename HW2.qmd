@@ -38,6 +38,19 @@ holc <- st_read(here("data", "mapping-inequality","mapping-inequality-los-angele
 #Read in bird data
 birds <- st_read(here("data", "gbif-birds-LA"), quiet = TRUE)
 
+#To rid of PDF render error. Explicitly changing CRS
+if (is.na(st_crs(holc))) {
+  st_crs(holc) <- 4326
+}
+if (is.na(st_crs(ejscreen))) {
+  st_crs(ejscreen) <- 4326
+}
+
+#Ensuring data sets have the same CRS
+ejscreen <- st_transform(ejscreen, st_crs(holc))
+#Unit check 
+st_crs(holc, parameters = TRUE)$units_gdal
+
 ```
 
 ```{r,warning=FALSE, message=FALSE}
