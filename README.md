@@ -1,16 +1,18 @@
-# eds223_hw2
+# Mapping Environmental Injustice in Los Angeles County
+
+# Description
+This repository analyzes the legacy of HOLC redlining in Los Angeles, focusing on environmental justice indicators and biodiversity observations.
 
 # Purpose
 This repository contains code and analysis for exploring the environmental and socioeconomic impacts of historical redlining practices LA County. The project investigates how Home Owners’ Loan Corporation (HOLC) grades relate to environmental burdens, biodiversity and social vulnerability today.
 
 # Repository Structure
-This repository includes:
+This repository houses two datasets that relate to biodiversity observations and HOLC grading in LA County, an qmd file that houses the injustice analysis and a README concerning details of the analysis.
+
+The files that are included in this repository includes:
   - .gitignore: a file where we name files to ignore when we push to Github
-
   - .Rhistory: a file that describes the historical changes of the files
-
   - data: Contains datasets including HOLC shapefiles, environmental injustice data, and bird diversity data
-
   - HW2.qmd: a file where the analysis and visualization takes place
 
 eds223_hw2/
@@ -35,11 +37,8 @@ eds223_hw2/
 
 # References & Acknowledgements
   - Ellis-Soto, D., et al. (2023). Historical redlining is associated with present-day urban biodiversity. Science Advances
-
   - HOLC maps from the Mapping Inequality Project
-
   - Bird data from eBird
-
   - Environmental data from EPA EJScreen
 
 
