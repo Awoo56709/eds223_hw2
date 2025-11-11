@@ -1,5 +1,7 @@
 ---
-title: "HW2"
+title: "Mapping Environmental Injustice in LA County"
+author: Joshua Ferrer-Lozano
+date: 11/10/2025
 format: html
 code-fold: False
 knitr: 
@@ -8,7 +10,7 @@ knitr:
     message: false
 ---
 
-```{r}
+```{r,warning=FALSE, message=FALSE}
 #importing libraries
 library(sf)
 library(tmap)
@@ -16,37 +18,42 @@ library(tidyverse)
 library(here)
 library(gt)
 library(dplyr)
+library(kableExtra)
+library(knitr)
+sf::sf_use_s2(FALSE) # avoid S2 indexing error
 ```
 
-```{r}
-#reading in data
+```{r,warning=FALSE, message=FALSE}
+#Reading in data
 
-# initializing variables for our data
+#Initializing variables for our data
 ejscreen <- st_read(here("data", "ejscreen", "ejscreen_2023_statepct.gdb"))
 
 holc <- st_read(here("data", "mapping-inequality","mapping-inequality-los-angeles.json"))
 
 birds <- st_read(here("data", "gbif-birds-LA"))
 
-# ensuring datasets have the same CRS
+#Ensuring datasets have the same CRS
 ejscreen <- st_transform(ejscreen, st_crs(holc))
 ```
 
 
-```{r}
+```{r,warning=FALSE, message=FALSE}
 
-# creating plot of HOLC polygons overlaying LA county
+#Creating plot of HOLC polygons overlaying LA county
 tmap_mode("plot")
 
 tm_shape(holc) +
   tm_basemap(server = "OpenStreetMap") +
   tm_polygons(col = "grade",
-              #using custom colots to better match original color scheme
+#Using custom colors to better match original color scheme
               palette = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B"),
               title = "HOLC Grade",
+              labels = c('A'='Best (Green)','B'='Still Desireable (Blue)','C' = 'Declining (Yellow)', 'D'='Hazardous (Red)'),
               alpha = 0.6,
               border.col = "black",
-              border.lwd = 0.5) +
+              border.lwd = 0.5,
+              ) +
   tm_layout(
     main.title = "Historical Redlining in Los Angeles",
     legend.outside = TRUE,
@@ -57,44 +64,43 @@ tm_shape(holc) +
 
 ```
 
-```{r}
-#had error about indexes and S2, needed to set to FALSE
+```{r,warning=FALSE, message=FALSE}
+#Had error about indexes and S2, needed to set to FALSE
+#Make table showing percentage of census block groups
 
-sf::sf_use_s2(FALSE)
-#assigning HOLC grades to each block group
-joined_ej_holc <- st_join(ejscreen, holc)
+#Replace NA grades with "Ungraded"
+joined_ej_holc <- joined_ej_holc %>%
+  mutate(grade = ifelse(is.na(grade), "Ungraded", grade))
 
-# dropping geometries for the summary
-joined_ej_holc <- st_drop_geometry(joined_ej_holc)
-
-# counting block groups by HOLC grade
+#Create summary table
 summary_table <- joined_ej_holc %>%
-  mutate(grade = ifelse(is.na(grade), "Ungraded", grade)) %>%
-  count(grade) %>%
-  mutate(percent = round(100 * n / sum(n), 1))
+  st_drop_geometry() %>%
+  na.omit() %>%
+  group_by(grade) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(percent = round(count / sum(count) * 100, 1))
 
-# displaying a table with the r package gt
+#Display the table
 summary_table %>%
-  gt() %>%
-  tab_header(title = "Block Groups by HOLC Grade") %>%
-  fmt_number(columns = vars(percent), decimals = 1)
+  kable(caption = "Percentage of Census Block Groups Within HOLC Grade",
+        col.names = c("HOLC Grade", "Count", "Percent (%)")) %>%
+  kable_styling(full_width = FALSE)
 
 ```
 ```{r}
-# grouping and summarizing EJScreen variables
+#Group and summariZE EJScreen variables
 ej_summary <- joined_ej_holc %>%
   group_by(grade) %>%
   summarize(
-    #getting means of our target variables %low income, percentile life expectancy and particulate matter
-      mean_low_income = mean(LOWINCOME, na.rm = TRUE),
+#Get means of our target variables %low income, percentile life expectancy and particulate matter
+    mean_low_income = mean(LOWINCOME, na.rm = TRUE),
     mean_pm25 = mean(PM25, na.rm = TRUE),
     mean_life_expectancy = mean(LIFEEXPPCT, na.rm = TRUE)
   )
 ```
 
-```{r}
-
-# plotting % percent low income
+```{r,warning=FALSE, message=FALSE}
+#Plot % percent low income
 ggplot(ej_summary, aes(x = grade, y = mean_low_income, fill = grade)) +
   geom_col() +
   labs(title = "% Low Income by HOLC Grade", x = "HOLC Grade", y = "Mean % Low Income") +
@@ -103,8 +109,8 @@ ggplot(ej_summary, aes(x = grade, y = mean_low_income, fill = grade)) +
 
 ```
 
-```{r}
-# plotting PM2.5
+```{r,warning=FALSE, message=FALSE}
+#Plot PM2.5
 ggplot(ej_summary, aes(x = grade, y = mean_pm25, fill = grade)) +
   geom_col() +
   labs(title = "PM2.5 Percentile by HOLC Grade", x = "HOLC Grade", y = "Mean Percentile") +
@@ -113,8 +119,8 @@ ggplot(ej_summary, aes(x = grade, y = mean_pm25, fill = grade)) +
 
 ```
 
-```{r}
-# plotting life expectancy
+```{r,warning=FALSE, message=FALSE}
+#Plotting life expectancy
 ggplot(ej_summary, aes(x = grade, y = mean_life_expectancy, fill = grade)) +
   geom_col() +
   labs(title = "Low Life Expectancy Percentile by HOLC Grade", x = "HOLC Grade", y = "Mean Percentile") +
@@ -125,7 +131,7 @@ ggplot(ej_summary, aes(x = grade, y = mean_life_expectancy, fill = grade)) +
 
 What I observed through this assignment was not atypical. Residents in lower HOLC graded areas tend to be of the lower socioeconomic status, and are prone to higher levels of environmental injustices (zoning and lack of green space) and social obstacles. In this example, higher PM2.5 levels and "coincidentally" higher instance of lower live expectancy. 
 
-Moreover, it is startling to know there are a lot of NA values. This illustrates that there is far more that we do not know about the sample/population in terms of the affects of historic HOLC ratings.
+Moreover, it is startling to know there are a lot of NA values. This illustrates that there is far more that we do not know about the sample/population in terms of the affects of historic HOLC ratings.This may be due to historical urban sprawl where the expansion of LA.
 
 ## Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
 
@@ -133,23 +139,25 @@ Based on the observations, HOLC rated areas tend to have an inverse relationship
 
 # Part 2:Legacy of redlining in biodiversity observations
 
-```{r}
-# transforming the 
+```{r,warning=FALSE, message=FALSE}
+#Transforming the 
 birds <- st_transform(birds, st_crs(holc))
 
-# Spatial join: assign HOLC grade to each bird observation
+#Spatial join: assign HOLC grade to each bird observation
 bird_joined <- st_join(birds, holc)
 
-# Drop geometry and summarize
+#Drop geometry and summarize
 bird_summary <- bird_joined %>%
   st_drop_geometry() %>%
-  count(grade) %>%
-  mutate(percent = round(100 * n / sum(n), 1))
+  na.omit() %>%
+  group_by(grade) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(percent = round(count / sum(count) * 100, 1))
 
-# Plot bird observations
+#Plot bird observations
 ggplot(bird_summary, aes(x = grade, y = percent, fill = grade)) +
   geom_col() +
-  labs(title = "Bird Observations by HOLC Grade", x = "HOLC Grade", y = "Percent of Observations") +
+  labs(title = "Bird Observations by HOLC Grade in LA", x = "HOLC Grade", y = "Percent of Observations") +
   scale_fill_manual(values = c("A" = '#3C9D32',"B" = '#3A7CA5', "C" = "#F4D35E", "D" = "#D1495B")) +
   theme_minimal()
 
@@ -157,10 +165,9 @@ ggplot(bird_summary, aes(x = grade, y = percent, fill = grade)) +
 
 ## Our results don’t match the findings from Ellis-Soto et al. 2023! Read the abstract of the study. Why might we have obtained different results in our analysis? What did the paper consider that we did not? 
 
-Our analysis differed because of a few things:
-- We focused on Los Angeles but they did a country-wide analysis
-- They adjusted their approach woth confounding gvariables such as vegetation, open space, population desnity and climate
-- They used a mixed effects model
-- We used sampling density alone but Ellis-Soto mentioned survey completeness.
+Our analysis differed because of a few things: We focused on Los Angeles County whereas they focused on a country-wide analysis. They adjusted their approach also with confounding variables such as vegetation, open-space, population density and climate. They also used a mixed effects model, whereas we used sampling density alone. Lastly Ellis-Soto mentions survey completeness.
+
+
+
 
 
