@@ -38,12 +38,7 @@ holc <- st_read(here("data", "mapping-inequality","mapping-inequality-los-angele
 #Read in bird data
 birds <- st_read(here("data", "gbif-birds-LA"), quiet = TRUE)
 
-#Ensuring data sets have the same CRS
-ejscreen <- st_transform(ejscreen, st_crs(holc))
-#Unit check 
-st_crs(holc, parameters = TRUE)$units_gdal
 ```
-
 
 ```{r,warning=FALSE, message=FALSE}
 
