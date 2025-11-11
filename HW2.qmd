@@ -65,8 +65,9 @@ tm_shape(holc) +
 ```
 
 ```{r,warning=FALSE, message=FALSE}
-#Had error about indexes and S2, needed to set to FALSE
-#Make table showing percentage of census block groups
+
+#Perform spatial join to assign HOLC grades to block groups
+joined_ej_holc <- st_join(ejscreen, holc, join = st_intersects)
 
 #Replace NA grades with "Ungraded"
 joined_ej_holc <- joined_ej_holc %>%
@@ -87,6 +88,7 @@ summary_table %>%
   kable_styling(full_width = FALSE)
 
 ```
+
 ```{r}
 #Group and summariZE EJScreen variables
 ej_summary <- joined_ej_holc %>%
