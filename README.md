@@ -1,5 +1,8 @@
 # Mapping Environmental Injustice in Los Angeles County
 
+# Author
+Joshua Ferrer-Lozano
+
 # Description
 This repository analyzes the legacy of HOLC redlining in Los Angeles, focusing on environmental justice indicators and biodiversity observations.
 
