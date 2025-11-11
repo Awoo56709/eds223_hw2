@@ -9,9 +9,11 @@ knitr:
     warning: false
     message: false
 ---
+# Reading in Data
 
 ```{r,warning=FALSE, message=FALSE}
-#importing libraries
+#Importing libraries
+suppressPackageStartupMessages({
 library(sf)
 library(tmap)
 library(tidyverse)
@@ -21,20 +23,25 @@ library(dplyr)
 library(kableExtra)
 library(knitr)
 sf::sf_use_s2(FALSE) # avoid S2 indexing error
+})
 ```
 
 ```{r,warning=FALSE, message=FALSE}
 #Reading in data
 
 #Initializing variables for our data
-ejscreen <- st_read(here("data", "ejscreen", "ejscreen_2023_statepct.gdb"))
+ejscreen <- st_read(here("data", "ejscreen", "ejscreen_2023_statepct.gdb"), quiet = TRUE)
 
-holc <- st_read(here("data", "mapping-inequality","mapping-inequality-los-angeles.json"))
+#Read in HOLC data
+holc <- st_read(here("data", "mapping-inequality","mapping-inequality-los-angeles.json"), quiet = TRUE)
 
-birds <- st_read(here("data", "gbif-birds-LA"))
+#Read in bird data
+birds <- st_read(here("data", "gbif-birds-LA"), quiet = TRUE)
 
-#Ensuring datasets have the same CRS
+#Ensuring data sets have the same CRS
 ejscreen <- st_transform(ejscreen, st_crs(holc))
+#Unit check 
+st_crs(holc, parameters = TRUE)$units_gdal
 ```
 
 
@@ -148,7 +155,7 @@ birds <- st_transform(birds, st_crs(holc))
 #Spatial join: assign HOLC grade to each bird observation
 bird_joined <- st_join(birds, holc)
 
-#Drop geometry and summarize
+#Drop geometry and summarize proportions based on HOLC grades
 bird_summary <- bird_joined %>%
   st_drop_geometry() %>%
   na.omit() %>%
